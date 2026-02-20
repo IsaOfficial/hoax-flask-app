@@ -1,3 +1,17 @@
+import nltk
+import os
+
+# Tentukan lokasi nltk_data di server
+nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
+os.makedirs(nltk_data_path, exist_ok=True)
+nltk.data.path.append(nltk_data_path)
+
+# Download stopwords jika belum ada
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords', download_dir=nltk_data_path)
+
 import re
 import joblib
 import pandas as pd
@@ -7,6 +21,7 @@ from sklearn.metrics import (
     roc_curve, precision_recall_curve,
     roc_auc_score, average_precision_score
 )
+
 from nltk.corpus import stopwords
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 
