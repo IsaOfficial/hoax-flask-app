@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sistem Deteksi Berita Hoaks</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-light">
+    <div class="container py-5">
+      <div class="card shadow-lg">
+        <div class="card-body text-center">
+          <h2 class="fw-bold mb-3">
+            Sistem Deteksi Berita Hoaks Berbahasa Indonesia
+          </h2>
+
+          <p class="text-muted">
+            Aplikasi ini dikembangkan sebagai luaran tambahan dari penelitian
+            berjudul "Analisis Pengaruh Random Oversampling (ROS) terhadap
+            Kinerja XGBoost dalam Mendeteksi Berita Hoaks Berbahasa Indonesia".
+            Sistem ini menggunakan model klasifikasi untuk mendeteksi apakah
+            suatu berita merupakan <b>HOAKS</b> atau <b>ASLI</b>, dengan
+            memanfaatkan algoritma XGBoost yang dioptimalkan menggunakan
+            pendekatan Random Oversampling (ROS) untuk menangani masalah
+            ketidakseimbangan data. Aplikasi ini bertujuan untuk memberikan alat
+            bantu yang efektif dalam mengidentifikasi berita hoaks sehingga
+            dapat membantu masyarakat dalam menyaring informasi yang mereka
+            terima. Dengan antarmuka yang sederhana dan mudah digunakan,
+            pengguna dapat dengan cepat menguji model dan melakukan prediksi
+            terhadap teks berita yang mereka masukkan. Sistem ini diharapkan
+            dapat berkontribusi dalam upaya memerangi penyebaran informasi palsu
+            di Indonesia.
+          </p>
+
+          <hr class="my-4" />
+
+          <div class="row g-3 justify-content-center">
+            <div class="col-md-4 d-grid">
+              <a href="/test-page" class="btn btn-primary btn-lg">
+                Pengujian Model
+              </a>
+            </div>
+
+            <div class="col-md-4 d-grid">
+              <a href="/predict-page" class="btn btn-success btn-lg">
+                Prediksi Berita Hoaks
+              </a>
+            </div>
+          </div>
+
+          <hr class="my-4" />
+
+          <div class="text-start mt-3">
+            <h5>Alur Kerja Singkat</h5>
+            <ol>
+              <li>Input data teks berita berbahasa Indonesia</li>
+              <li>
+                Preprocessing teks (case folding, cleaning, stopword removal,
+                stemming)
+              </li>
+              <li>Ekstraksi fitur menggunakan metode TF-IDF</li>
+              <li>
+                Penanganan ketidakseimbangan data menggunakan Random
+                Oversampling (ROS)
+              </li>
+              <li>Proses klasifikasi menggunakan model XGBoost</li>
+              <li>Evaluasi performa model menggunakan metrik klasifikasi</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% include 'footer.html' %}
+  </body>
+</html>

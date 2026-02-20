@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Analisis ROS vs XGBoost</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .card {
+        border-radius: 12px;
+      }
+      .chart-container {
+        position: relative;
+        height: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-5">
+      <!-- Header -->
+      <div class="text-center mb-4">
+        <h2 class="fw-bold">
+          Analisis Pengaruh Random Oversampling terhadap XGBoost
+        </h2>
+        <p class="text-muted">Prediksi Berita Hoaks Berbahasa Indonesia</p>
+      </div>
+
+      <!-- Upload Card -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <form id="uploadForm">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-9">
+                <input type="file" name="file" class="form-control" required />
+              </div>
+              <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-primary">Test</button>
+              </div>
+            </div>
+          </form>
+
+          <div id="loading" class="text-center mt-3" style="display: none">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2">Pengujian model sedang diproses...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics Section -->
+      <div id="resultsSection" style="display: none">
+        <!-- Metrics Table -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Perbandingan Metrik Evaluasi</h5>
+            <table class="table table-bordered text-center">
+              <thead class="table-light">
+                <tr>
+                  <th>Metrik</th>
+                  <th>Baseline</th>
+                  <th>ROS</th>
+                </tr>
+              </thead>
+              <tbody id="metricsTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Perbandingan Metrik (Bar Chart)</h5>
+            <div class="chart-container">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROC Curve -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">ROC Curve</h5>
+            <div class="chart-container">
+              <canvas id="rocChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- PR Curve -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Precision-Recall Curve</h5>
+            <div class="chart-container">
+              <canvas id="prChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confusion Matrix -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Confusion Matrix</h5>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-center">Baseline</h6>
+                <canvas id="cmBaseline"></canvas>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-center">ROS</h6>
+                <canvas id="cmROS"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+          document.getElementById("loading").style.display = "block";
+          document.getElementById("resultsSection").style.display = "none";
+
+          const response = await fetch("/train", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("resultsSection").style.display = "block";
+
+          renderMetrics(data);
+          renderBarChart(data);
+          renderROC(data);
+          renderPR(data);
+
+          renderConfusionMatrix("cmBaseline", data.baseline.confusion_matrix);
+          renderConfusionMatrix("cmROS", data.ros.confusion_matrix);
+        });
+
+      function renderMetrics(data) {
+        const table = document.getElementById("metricsTable");
+        table.innerHTML = "";
+
+        const metrics = [
+          "accuracy",
+          "precision",
+          "recall",
+          "f1",
+          "f1_macro",
+          "f1_weighted",
+          "fnr",
+          "roc_auc",
+        ];
+
+        metrics.forEach((metric) => {
+          table.innerHTML += `
+            <tr>
+                <td>${metric.toUpperCase()}</td>
+                <td>${data.baseline[metric].toFixed(4)}</td>
+                <td>${data.ros[metric].toFixed(4)}</td>
+            </tr>
+        `;
+        });
+      }
+
+      function renderBarChart(data) {
+        const metricLabels = {
+          accuracy: "Accuracy",
+          precision: "Precision",
+          recall: "Recall",
+          f1: "F1-Score",
+          f1_macro: "F1-Macro",
+          f1_weighted: "F1-Weighted",
+          fnr: "FNR",
+          roc_auc: "ROC-AUC",
+        };
+
+        const metrics = Object.keys(metricLabels);
+
+        new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: {
+            labels: metrics.map((m) => metricLabels[m]),
+            datasets: [
+              {
+                label: "Baseline",
+                data: metrics.map((m) => data.baseline[m]),
+              },
+              {
+                label: "ROS",
+                data: metrics.map((m) => data.ros[m]),
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1,
+              },
+            },
+          },
+        });
+      }
+
+      function renderROC(data) {
+        new Chart(document.getElementById("rocChart"), {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Baseline",
+                data: data.baseline.roc_curve.fpr.map((fpr, i) => ({
+                  x: fpr,
+                  y: data.baseline.roc_curve.tpr[i],
+                })),
+              },
+              {
+                label: "ROS",
+                data: data.ros.roc_curve.fpr.map((fpr, i) => ({
+                  x: fpr,
+                  y: data.ros.roc_curve.tpr[i],
+                })),
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: {
+                type: "linear",
+                title: { display: true, text: "False Positive Rate" },
+              },
+              y: { title: { display: true, text: "True Positive Rate" } },
+            },
+          },
+        });
+      }
+
+      function renderPR(data) {
+        new Chart(document.getElementById("prChart"), {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Baseline",
+                data: data.baseline.pr_curve.recall.map((rec, i) => ({
+                  x: rec,
+                  y: data.baseline.pr_curve.precision[i],
+                })),
+              },
+              {
+                label: "ROS",
+                data: data.ros.pr_curve.recall.map((rec, i) => ({
+                  x: rec,
+                  y: data.ros.pr_curve.precision[i],
+                })),
+              },
+            ],
+          },
+          options: {
+            scales: {
+              x: { type: "linear", title: { display: true, text: "Recall" } },
+              y: { title: { display: true, text: "Precision" } },
+            },
+          },
+        });
+      }
+      function renderConfusionMatrix(canvasId, cmObj) {
+        const matrix = cmObj.matrix;
+
+        const data = [
+          { x: "Pred 0", y: "Actual 0", v: matrix[0][0] },
+          { x: "Pred 1", y: "Actual 0", v: matrix[0][1] },
+          { x: "Pred 0", y: "Actual 1", v: matrix[1][0] },
+          { x: "Pred 1", y: "Actual 1", v: matrix[1][1] },
+        ];
+
+        new Chart(document.getElementById(canvasId), {
+          type: "bubble",
+          data: {
+            datasets: [
+              {
+                label: "Confusion Matrix",
+                data: data.map((d) => ({
+                  x: d.x,
+                  y: d.y,
+                  r: 20,
+                })),
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return "Value: " + data[context.dataIndex].v;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: { type: "category" },
+              y: { type: "category" },
+            },
+          },
+        });
+      }
+    </script>
+    {% include 'footer.html' %}
+  </body>
+</html>
