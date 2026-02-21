@@ -1,0 +1,24 @@
+[
+  {
+    "Model": "XGBoost Baseline",
+    "Accuracy": 0.89,
+    "Precision (Hoaks)": 0.8837,
+    "Recall (Hoaks)": 0.9091,
+    "F1-Score (Hoaks)": 0.8962,
+    "F1-Macro": 0.8896,
+    "F1-Weighted": 0.8899,
+    "False Negative Rate": 0.0909,
+    "ROC-AUC": 0.9591
+  },
+  {
+    "Model": "XGBoost + ROS",
+    "Accuracy": 0.8925,
+    "Precision (Hoaks)": 0.8879,
+    "Recall (Hoaks)": 0.9091,
+    "F1-Score (Hoaks)": 0.8983,
+    "F1-Macro": 0.8921,
+    "F1-Weighted": 0.8924,
+    "False Negative Rate": 0.0909,
+    "ROC-AUC": 0.9632
+  }
+]

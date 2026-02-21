@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
@@ -38,12 +38,6 @@
 
           <div class="row g-3 justify-content-center">
             <div class="col-md-4 d-grid">
-              <a href="/test-page" class="btn btn-primary btn-lg">
-                Pengujian Model
-              </a>
-            </div>
-
-            <div class="col-md-4 d-grid">
               <a href="/predict-page" class="btn btn-success btn-lg">
                 Prediksi Berita Hoaks
               </a>
@@ -51,27 +45,211 @@
           </div>
 
           <hr class="my-4" />
+          <!-- Header -->
+          <div class="text-center my-4">
+            <h4 class="fw-bold">
+              Visualisasi Perbandingan Hasil Evaluasi Model XGBoost dengan dan
+              tanpa ROS
+            </h4>
+          </div>
 
-          <div class="text-start mt-3">
-            <h5>Alur Kerja Singkat</h5>
-            <ol>
-              <li>Input data teks berita berbahasa Indonesia</li>
-              <li>
-                Preprocessing teks (case folding, cleaning, stopword removal,
-                stemming)
-              </li>
-              <li>Ekstraksi fitur menggunakan metode TF-IDF</li>
-              <li>
-                Penanganan ketidakseimbangan data menggunakan Random
-                Oversampling (ROS)
-              </li>
-              <li>Proses klasifikasi menggunakan model XGBoost</li>
-              <li>Evaluasi performa model menggunakan metrik klasifikasi</li>
-            </ol>
+          <!-- Metrics Table -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="mb-3">Perbandingan Metrik Evaluasi</h5>
+              <table class="table table-bordered text-center mt-3">
+                <thead class="table-light">
+                  <tr>
+                    <th>Metrik</th>
+                    <th>Baseline</th>
+                    <th>ROS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for key, value in metrics.baseline.items() %} {% if key !=
+                  "Model" %}
+                  <tr>
+                    <td>{{ key }}</td>
+                    <td>{{ "%.4f"|format(metrics.baseline[key]) }}</td>
+                    <td>{{ "%.4f"|format(metrics.ros[key]) }}</td>
+                  </tr>
+                  {% endif %} {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>Perbandingan Metrik (Bar Chart)</h5>
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>ROC Curve</h5>
+              <canvas id="rocChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>Precision-Recall Curve</h5>
+              <canvas id="prChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>Confusion Matrix</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <h6 class="text-center">Baseline</h6>
+                  <canvas id="cmBaseline"></canvas>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-center">ROS</h6>
+                  <canvas id="cmROS"></canvas>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
     {% include 'footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      const metrics = {{ metrics | tojson | safe }};
+      const rocData = {{ roc_data | tojson | safe }};
+      const prData = {{ pr_data | tojson | safe }};
+      const cmData = {{ cm_data | tojson | safe }};
+
+      document.addEventListener("DOMContentLoaded", function () {
+
+        // ==========================
+        // BAR CHART METRICS
+        // ==========================
+        const metricKeys = Object.keys(metrics.baseline)
+          .filter(k => k !== "Model");
+
+        new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: {
+            labels: metricKeys,
+            datasets: [
+              {
+                label: "Baseline",
+                data: metricKeys.map(k => metrics.baseline[k])
+              },
+              {
+                label: "ROS",
+                data: metricKeys.map(k => metrics.ros[k])
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 1
+              }
+            }
+          }
+        });
+
+        // ==========================
+        // ROC CURVE
+        // ==========================
+        new Chart(document.getElementById("rocChart"), {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Baseline",
+                data: rocData.baseline.fpr.map((fpr, i) => ({
+                  x: fpr,
+                  y: rocData.baseline.tpr[i]
+                }))
+              },
+              {
+                label: "ROS",
+                data: rocData.ros.fpr.map((fpr, i) => ({
+                  x: fpr,
+                  y: rocData.ros.tpr[i]
+                }))
+              }
+            ]
+          },
+          options: {
+            scales: {
+              x: { type: "linear", title: { display: true, text: "False Positive Rate" } },
+              y: { title: { display: true, text: "True Positive Rate" } }
+            }
+          }
+        });
+
+        // ==========================
+        // PR CURVE
+        // ==========================
+        new Chart(document.getElementById("prChart"), {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Baseline",
+                data: prData.baseline.recall.map((rec, i) => ({
+                  x: rec,
+                  y: prData.baseline.precision[i]
+                }))
+              },
+              {
+                label: "ROS",
+                data: prData.ros.recall.map((rec, i) => ({
+                  x: rec,
+                  y: prData.ros.precision[i]
+                }))
+              }
+            ]
+          },
+          options: {
+            scales: {
+              x: { type: "linear", title: { display: true, text: "Recall" } },
+              y: { title: { display: true, text: "Precision" } }
+            }
+          }
+        });
+
+        // ==========================
+        // CONFUSION MATRIX
+        // ==========================
+        function renderCM(canvasId, matrix) {
+          new Chart(document.getElementById(canvasId), {
+            type: "bar",
+            data: {
+              labels: ["TN", "FP", "FN", "TP"],
+              datasets: [{
+                label: "Jumlah",
+                data: [
+                  matrix[0][0],
+                  matrix[0][1],
+                  matrix[1][0],
+                  matrix[1][1]
+                ]
+              }]
+            },
+            options: {
+              responsive: true
+            }
+          });
+        }
+
+        renderCM("cmBaseline", cmData.baseline);
+        renderCM("cmROS", cmData.ros);
+      });
+    </script>
   </body>
 </html>
