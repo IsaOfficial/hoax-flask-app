@@ -4,4 +4,4 @@ venv/
 .env
 test.html
 model_pipeline.py
-dataset_terjemahan.csv
+.csv
