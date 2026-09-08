@@ -2,18 +2,21 @@ from flask import Flask, render_template, request, jsonify
 import joblib
 import json
 import os
+from pathlib import Path
+from preprocessing import preprocess
 
 app = Flask(__name__)
+BASE_DIR = Path(__file__).resolve().parent
 
 # ===============================
 # Load Model & Evaluasi (sekali saat startup)
 # ===============================
 
-tfidf = joblib.load("tfidf_vectorizer.pkl")
-model_baseline = joblib.load("xgboost_baseline_model.pkl")
-model_ros = joblib.load("xgboost_ros_model.pkl")
+tfidf = joblib.load(BASE_DIR / "tfidf_vectorizer.pkl")
+model_baseline = joblib.load(BASE_DIR / "xgboost_baseline_model.pkl")
+model_ros = joblib.load(BASE_DIR / "xgboost_ros_model.pkl")
 
-with open("metrics.json") as f:
+with (BASE_DIR / "metrics.json").open(encoding="utf-8") as f:
     metrics = json.load(f)
     # Konversi list -> dictionary terstruktur
     metrics_dict = {
@@ -21,13 +24,13 @@ with open("metrics.json") as f:
         "ros": metrics[1]
     }
 
-with open("roc_data.json") as f:
+with (BASE_DIR / "roc_data.json").open(encoding="utf-8") as f:
     roc_data = json.load(f)
 
-with open("pr_data.json") as f:
+with (BASE_DIR / "pr_data.json").open(encoding="utf-8") as f:
     pr_data = json.load(f)
 
-with open("conf_matrix.json") as f:
+with (BASE_DIR / "conf_matrix.json").open(encoding="utf-8") as f:
     cm_data = json.load(f)
 
 # ===============================
@@ -54,14 +57,25 @@ def predict_page():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
-    text = data.get("text")
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Body harus berupa objek JSON yang valid"}), 400
 
+    if "text" not in data:
+        return jsonify({"error": "Field text wajib diisi"}), 400
+    text = data["text"]
+    if not isinstance(text, str):
+        return jsonify({"error": "Teks harus berupa string"}), 400
+
+    text = text.strip()
     if not text:
         return jsonify({"error": "Teks tidak boleh kosong"}), 400
 
-    # Transform TF-IDF
-    vector = tfidf.transform([text])
+    # Gunakan preprocessing yang sama dengan pipeline evaluasi.
+    text_clean = preprocess(text)
+    if not text_clean:
+        return jsonify({"error": "Teks tidak mengandung kata yang dapat dianalisis setelah dibersihkan"}), 400
+    vector = tfidf.transform([text_clean])
 
     # Gunakan model ROS sebagai model final penelitian
     prediction = model_ros.predict(vector)[0]

@@ -1,123 +1,47 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Sistem Prediksi Berita Hoaks</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body class="bg-light">
-    <div class="container py-5">
-      <div class="card shadow-lg">
-        <div class="card-body text-center">
-          <h2 class="fw-bold mb-3">
-            Sistem Prediksi Berita Hoaks Bahasa Indonesia
-          </h2>
-
-          <p class="text-muted">
-            Aplikasi ini dikembangkan sebagai luaran tambahan dari penelitian
-            berjudul "Analisis Pengaruh Random Oversampling (ROS) terhadap
-            Kinerja XGBoost dalam Memprediksi Berita Hoaks Berbahasa Indonesia".
-            Sistem ini menggunakan model klasifikasi untuk menprediksi apakah
-            suatu berita merupakan <b>HOAKS</b> atau <b>ASLI</b>, dengan
-            memanfaatkan algoritma XGBoost dan pendekatan Random Oversampling
-            (ROS) untuk menangani masalah ketidakseimbangan data. Aplikasi ini
-            bertujuan untuk memberikan alat bantu yang efektif dalam
-            mengidentifikasi berita hoaks sehingga dapat membantu masyarakat
-            dalam menyaring informasi yang mereka terima. Dengan antarmuka yang
-            sederhana dan mudah digunakan, pengguna dapat dengan cepat menguji
-            model dan melakukan prediksi terhadap teks berita yang mereka
-            masukkan. Sistem ini diharapkan dapat berkontribusi dalam upaya
-            memerangi penyebaran informasi palsu di Indonesia.
-          </p>
-
-          <hr class="my-4" />
-
-          <div class="row g-3 justify-content-center">
-            <div class="col-md-4 d-grid">
-              <a href="/predict-page" class="btn btn-success btn-lg">
-                Prediksi Berita Hoaks
-              </a>
-            </div>
-          </div>
-
-          <hr class="my-4" />
-          <!-- Header -->
-          <div class="text-center my-4">
-            <h4 class="fw-bold">
-              Visualisasi Perbandingan Hasil Evaluasi Model XGBoost dengan dan
-              tanpa ROS
-            </h4>
-          </div>
-
-          <!-- Metrics Table -->
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5 class="mb-3">Perbandingan Metrik Evaluasi</h5>
-              <table class="table table-bordered text-center mt-3">
-                <thead class="table-light">
-                  <tr>
-                    <th>Metrik</th>
-                    <th>XGBoost-Baseline</th>
-                    <th>XGBoost+ROS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for key, value in metrics.baseline.items() %} {% if key !=
-                  "Model" %}
-                  <tr>
-                    <td>{{ key }}</td>
-                    <td>{{ "%.4f"|format(metrics.baseline[key]) }}</td>
-                    <td>{{ "%.4f"|format(metrics.ros[key]) }}</td>
-                  </tr>
-                  {% endif %} {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>Perbandingan Metrik (Bar Chart)</h5>
-              <canvas id="barChart"></canvas>
-            </div>
-          </div>
-
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>ROC Curve</h5>
-              <canvas id="rocChart"></canvas>
-            </div>
-          </div>
-
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>Precision-Recall Curve</h5>
-              <canvas id="prChart"></canvas>
-            </div>
-          </div>
-
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>Confusion Matrix</h5>
-              <div class="row">
-                <div class="col-md-6">
-                  <h6 class="text-center">XGBoost-Baseline</h6>
-                  <canvas id="cmBaseline"></canvas>
-                </div>
-                <div class="col-md-6">
-                  <h6 class="text-center">XGBoost+ROS</h6>
-                  <canvas id="cmROS"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Sistem Prediksi Berita Hoaks</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}" />
+</head>
+<body>
+{% include 'nav.html' %}
+<main class="shell">
+  <section class="hero panel">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="status-dot"></span> ANALISIS BERITA · BAHASA INDONESIA</span>
+      <h1>Lebih kritis membaca.<br><span>Lebih bijak percaya.</span></h1>
+      <p>Kenali indikasi berita hoaks melalui analisis teks. Jelajahi hasil evaluasi model atau mulai analisis berita Anda.</p>
+      <div class="actions"><a class="button primary" href="{{ url_for('predict_page') }}">Mulai analisis <span aria-hidden="true">↗</span></a><a class="button secondary" href="#evaluasi">Lihat evaluasi <span aria-hidden="true">↓</span></a></div>
+      <div class="hero-tags"><span>XGBoost</span><span>Random Oversampling</span><span>TF-IDF</span></div>
     </div>
-    {% include 'footer.html' %}
+    <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="shield">✓</div><span class="art-caption">TELITI SEBELUM PERCAYA</span></div>
+  </section>
+  <section class="stats" aria-label="Ringkasan evaluasi model ROS">
+    {% for title, key, note in [('Akurasi', 'Accuracy', 'Prediksi tepat secara keseluruhan'), ('Precision hoaks', 'Precision (Hoaks)', 'Ketepatan prediksi kelas hoaks'), ('Recall hoaks', 'Recall (Hoaks)', 'Hoaks yang berhasil terdeteksi')] %}
+    <article class="panel stat"><div class="stat-top"><span>{{ title }}</span><span class="small-tag">MODEL ROS</span></div><strong>{{ '%.2f'|format(metrics.ros[key] * 100) }}<span>%</span></strong><p>{{ note }}</p></article>
+    {% endfor %}
+  </section>
+  <section id="evaluasi">
+    <div class="section-heading"><div><span class="eyebrow">PERFORMA MODEL</span><h2>Di balik setiap prediksi.</h2></div><p>Perbandingan XGBoost baseline dan XGBoost dengan ROS.</p></div>
+    <div class="dashboard-grid">
+      <article class="panel chart-card full"><div class="card-heading"><div><span class="eyebrow">01 / RINGKASAN</span><h3>Perbandingan metrik evaluasi</h3></div><span class="small-tag">BASELINE vs ROS</span></div>
+      <div class="table-scroll"><table><thead><tr><th scope="col">Metrik</th><th scope="col">XGBoost · Baseline</th><th scope="col">XGBoost + ROS</th></tr></thead><tbody>
+      {% for key, value in metrics.baseline.items() %}{% if key != 'Model' %}<tr><th scope="row">{{ key }}</th><td>{{ '%.4f'|format(value) }}</td><td>{{ '%.4f'|format(metrics.ros[key]) }}</td></tr>{% endif %}{% endfor %}
+      </tbody></table></div></article>
+      <article class="panel chart-card full"><span class="eyebrow">02 / KOMPARASI</span><h3>Metrik dalam satu pandangan</h3><div class="chart-wrap"><canvas id="barChart" role="img" aria-label="Grafik perbandingan metrik, nilai tersedia pada tabel di atas"></canvas></div><p class="chart-note">False Negative Rate: semakin rendah semakin baik. Metrik lainnya: semakin tinggi semakin baik.</p></article>
+      <article class="panel chart-card"><span class="eyebrow">03 / DISKRIMINASI</span><h3>ROC Curve</h3><div class="chart-wrap"><canvas id="rocChart" role="img" aria-label="Kurva ROC baseline dan ROS"></canvas></div></article>
+      <article class="panel chart-card"><span class="eyebrow">04 / KESEIMBANGAN</span><h3>Precision–Recall Curve</h3><div class="chart-wrap"><canvas id="prChart" role="img" aria-label="Kurva precision recall baseline dan ROS"></canvas></div></article>
+      <article class="panel chart-card"><span class="eyebrow">05 / HASIL KLASIFIKASI</span><h3>Confusion Matrix · Baseline</h3><div class="chart-wrap"><canvas id="cmBaseline" role="img" aria-label="Jumlah TN FP FN TP model baseline"></canvas></div></article>
+      <article class="panel chart-card"><span class="eyebrow">06 / HASIL KLASIFIKASI</span><h3>Confusion Matrix · ROS</h3><div class="chart-wrap"><canvas id="cmROS" role="img" aria-label="Jumlah TN FP FN TP model ROS"></canvas></div></article>
+    </div>
+  </section>
+  <aside class="research-note"><span class="eyebrow">TENTANG PENELITIAN</span><p>Aplikasi ini merupakan luaran penelitian “Analisis Pengaruh Random Oversampling (ROS) terhadap Kinerja XGBoost dalam Memprediksi Berita Hoaks Berbahasa Indonesia”.</p></aside>
+</main>
+{% include 'footer.html' %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
@@ -127,6 +51,19 @@
       const cmData = {{ cm_data | tojson | safe }};
 
       document.addEventListener("DOMContentLoaded", function () {
+        if (typeof Chart === "undefined") {
+          document.querySelectorAll('.chart-wrap').forEach(el => { el.textContent = 'Grafik tidak dapat dimuat. Periksa koneksi internet lalu muat ulang halaman.'; });
+          return;
+        }
+        Chart.defaults.color = '#a6b6d0';
+        Chart.defaults.borderColor = 'rgba(147, 177, 223, 0.10)';
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+        Chart.defaults.maintainAspectRatio = false;
+        Chart.defaults.elements.point.radius = 0;
+        Chart.defaults.elements.line.borderWidth = 2;
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.padding = 20;
+
 
         // ==========================
         // BAR CHART METRICS
@@ -141,10 +78,12 @@
             datasets: [
               {
                 label: "XGBoost-Baseline",
+                borderColor: "#7792bc", backgroundColor: "#7792bc",
                 data: metricKeys.map(k => metrics.baseline[k])
               },
               {
                 label: "XGBoost+ROS",
+                borderColor: "#409cff", backgroundColor: "#409cff",
                 data: metricKeys.map(k => metrics.ros[k])
               }
             ]
@@ -169,6 +108,7 @@
             datasets: [
               {
                 label: "XGBoost-Baseline",
+                borderColor: "#7792bc", backgroundColor: "#7792bc",
                 data: rocData.baseline.fpr.map((fpr, i) => ({
                   x: fpr,
                   y: rocData.baseline.tpr[i]
@@ -176,6 +116,7 @@
               },
               {
                 label: "XGBoost+ROS",
+                borderColor: "#409cff", backgroundColor: "#409cff",
                 data: rocData.ros.fpr.map((fpr, i) => ({
                   x: fpr,
                   y: rocData.ros.tpr[i]
@@ -200,6 +141,7 @@
             datasets: [
               {
                 label: "XGBoost-Baseline",
+                borderColor: "#7792bc", backgroundColor: "#7792bc",
                 data: prData.baseline.recall.map((rec, i) => ({
                   x: rec,
                   y: prData.baseline.precision[i]
@@ -207,6 +149,7 @@
               },
               {
                 label: "XGBoost+ROS",
+                borderColor: "#409cff", backgroundColor: "#409cff",
                 data: prData.ros.recall.map((rec, i) => ({
                   x: rec,
                   y: prData.ros.precision[i]
@@ -232,6 +175,7 @@
               labels: ["TN", "FP", "FN", "TP"],
               datasets: [{
                 label: "Jumlah",
+                backgroundColor: ["#409cff", "#efad67", "#ee8196", "#62d8cd"], borderRadius: 6,
                 data: [
                   matrix[0][0],
                   matrix[0][1],

@@ -1,20 +1,5 @@
-import nltk
-import os
-
-# Tentukan lokasi nltk_data di server
-nltk_data_path = os.path.join(os.getcwd(), "nltk_data")
-os.makedirs(nltk_data_path, exist_ok=True)
-nltk.data.path.append(nltk_data_path)
-
-# Download stopwords jika belum ada
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords', download_dir=nltk_data_path)
-
-import re
 import joblib
-import pandas as pd
+from pathlib import Path
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
     f1_score, confusion_matrix,
@@ -22,30 +7,14 @@ from sklearn.metrics import (
     roc_auc_score, average_precision_score
 )
 
-from nltk.corpus import stopwords
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
+from preprocessing import preprocess
 
 
 # Load artifacts sekali saat server start
-tfidf = joblib.load("tfidf_vectorizer.pkl")
-model_baseline = joblib.load("xgb_baseline_model.pkl")
-model_ros = joblib.load("xgb_ros_model.pkl")
-
-stop_words = set(stopwords.words('indonesian'))
-factory = StemmerFactory()
-stemmer = factory.create_stemmer()
-
-def preprocess(text):
-    text = text.lower()
-    text = re.sub(r'http\S+|www\S+', '', text)
-    text = re.sub(r'[^a-z\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-
-    text = stemmer.stem(text)  # lebih cepat stem sekaligus
-    tokens = text.split()
-    tokens = [w for w in tokens if w not in stop_words]
-
-    return ' '.join(tokens)
+BASE_DIR = Path(__file__).resolve().parent
+tfidf = joblib.load(BASE_DIR / "tfidf_vectorizer.pkl")
+model_baseline = joblib.load(BASE_DIR / "xgboost_baseline_model.pkl")
+model_ros = joblib.load(BASE_DIR / "xgboost_ros_model.pkl")
 
 
 def evaluate(model, X_tfidf, y_true):
