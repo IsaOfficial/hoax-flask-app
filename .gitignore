@@ -2,6 +2,3 @@ __pycache__/
 *.pyc
 venv/
 .env
-test.html
-model_pipeline.py
-.csv

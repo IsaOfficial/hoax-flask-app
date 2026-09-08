@@ -15,7 +15,7 @@ _stemmer = StemmerFactory().create_stemmer()
 
 
 def preprocess(text):
-    """Pertahankan urutan transformasi dari model_pipeline.py."""
+    """Bersihkan, stem, lalu hapus stopword sesuai pipeline penelitian."""
     text = text.lower()
     text = re.sub(r"http\S+|www\S+", "", text)
     text = re.sub(r"[^a-z\s]", " ", text)

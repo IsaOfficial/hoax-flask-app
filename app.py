@@ -7,14 +7,14 @@ from preprocessing import preprocess
 
 app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
 
 # ===============================
 # Load Model & Evaluasi (sekali saat startup)
 # ===============================
 
-tfidf = joblib.load(BASE_DIR / "tfidf_vectorizer.pkl")
-model_baseline = joblib.load(BASE_DIR / "xgboost_baseline_model.pkl")
-model_ros = joblib.load(BASE_DIR / "xgboost_ros_model.pkl")
+tfidf = joblib.load(MODEL_DIR / "tfidf_vectorizer.pkl")
+model_ros = joblib.load(MODEL_DIR / "xgboost_ros_model.pkl")
 
 with (BASE_DIR / "metrics.json").open(encoding="utf-8") as f:
     metrics = json.load(f)

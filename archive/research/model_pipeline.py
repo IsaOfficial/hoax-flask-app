@@ -12,9 +12,10 @@ from preprocessing import preprocess
 
 # Load artifacts sekali saat server start
 BASE_DIR = Path(__file__).resolve().parent
-tfidf = joblib.load(BASE_DIR / "tfidf_vectorizer.pkl")
+MODEL_DIR = BASE_DIR.parents[1] / "models"
+tfidf = joblib.load(MODEL_DIR / "tfidf_vectorizer.pkl")
 model_baseline = joblib.load(BASE_DIR / "xgboost_baseline_model.pkl")
-model_ros = joblib.load(BASE_DIR / "xgboost_ros_model.pkl")
+model_ros = joblib.load(MODEL_DIR / "xgboost_ros_model.pkl")
 
 
 def evaluate(model, X_tfidf, y_true):
